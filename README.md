@@ -23,22 +23,6 @@
 
 That error means `AUTH_SECRET` (or `NEXTAUTH_SECRET`) was not set. Set it in `.env.local`.
 
-## Fix for `Error 401: invalid_client` (Google sign-in)
-
-If you see `invalid_client`, it is almost always **client ID/secret mismatch**, not redirect URI.
-
-Checklist:
-
-1. In `.env.local`, make sure the value pair comes from the **same OAuth client**:
-   - `GOOGLE_CLIENT_ID=...apps.googleusercontent.com`
-   - `GOOGLE_CLIENT_SECRET=...`
-2. Avoid quotes/spaces/newlines in values.
-3. Restart Next.js after changing `.env.local`.
-4. In Google Cloud Console OAuth client, keep these exact local values:
-   - Authorized JavaScript origin: `http://localhost:3000`
-   - Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-5. If you rotated secret and lost the old full value, create a **new secret**, copy it immediately, and use that latest secret in `.env.local`.
-
 ## Google APIs + quota model
 
 - Yes, you must enable Gmail/Calendar/Tasks/People APIs in **your** Google Cloud project once.
