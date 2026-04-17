@@ -1,15 +1,5 @@
-import crypto from "node:crypto";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-
-function resolveAuthSecret() {
-  const configured = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-  if (configured) return configured;
-
-  // Prevent `MissingSecret` crashes in local/preview environments.
-  // Replace with a strong secret in real deployments.
-  return crypto.createHash("sha256").update("flowmind-fallback-secret-change-me").digest("hex");
-}
 
 async function refreshAccessToken(token: any) {
   try {
@@ -40,11 +30,8 @@ async function refreshAccessToken(token: any) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: resolveAuthSecret(),
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       authorization: {
         params: {
           scope:
