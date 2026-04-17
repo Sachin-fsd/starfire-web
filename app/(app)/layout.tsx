@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { SearchBar } from "@/components/SearchBar";
 import { VoiceMic } from "@/components/VoiceMic";
-import { auth } from "@/lib/auth";
 
 const nav = [
   ["Dashboard", "/dashboard"],
@@ -13,12 +11,7 @@ const nav = [
   ["Settings", "/settings"]
 ] as const;
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
-
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">

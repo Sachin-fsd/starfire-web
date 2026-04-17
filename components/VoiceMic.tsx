@@ -7,45 +7,8 @@ export function VoiceMic() {
   const [isRecording, setIsRecording] = useState(false);
   const [supported, setSupported] = useState(true);
   const [transcript, setTranscript] = useState("");
-  const [status, setStatus] = useState<string>("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const silenceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const transcriptRef = useRef("");
-
-  async function runPipeline(text: string) {
-    if (!text.trim()) return;
-    setStatus("Processing...");
-
-    const intentRes = await fetch("/api/intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: text, profile: {} })
-    });
-
-    if (!intentRes.ok) {
-      setStatus("Could not parse command.");
-      return;
-    }
-
-    const intent = await intentRes.json();
-
-    if (intent.clarificationNeeded) {
-      setStatus(intent.clarificationQuestion ?? "Need clarification.");
-      return;
-    }
-
-    if (intent.action === "NOTE") {
-      const noteRes = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: intent.body, threadId: intent.threadId ?? undefined })
-      });
-      setStatus(noteRes.ok ? "Note captured." : "Failed to save note.");
-      return;
-    }
-
-    setStatus(`Parsed action: ${intent.action}. Implemented execution can be triggered from API routes.`);
-  }
 
   useEffect(() => {
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -63,16 +26,11 @@ export function VoiceMic() {
         .map((result) => result[0].transcript)
         .join("");
       setTranscript(next);
-      transcriptRef.current = next;
       if (silenceRef.current) clearTimeout(silenceRef.current);
       silenceRef.current = setTimeout(() => recognition.stop(), 2500);
     };
 
-    recognition.onend = () => {
-      setIsRecording(false);
-      void runPipeline(transcriptRef.current);
-    };
-
+    recognition.onend = () => setIsRecording(false);
     recognitionRef.current = recognition;
   }, []);
 
@@ -84,7 +42,6 @@ export function VoiceMic() {
       recognitionRef.current.stop();
       return;
     }
-    setStatus("");
     setTranscript("");
     setIsRecording(true);
     recognitionRef.current.start();
@@ -93,20 +50,18 @@ export function VoiceMic() {
   return (
     <div className="fixed bottom-5 right-5 z-50 space-y-2">
       {!supported && <p className="rounded bg-amber-100 px-3 py-2 text-xs">Voice unsupported here. Type your request instead.</p>}
-      {(isRecording || status) && (
+      {isRecording && (
         <div className="max-w-sm rounded-lg border bg-white p-3 shadow">
-          {isRecording && (
-            <div className="mb-2 flex gap-1">
-              {waveform.map((_, idx) => (
-                <span
-                  key={idx}
-                  className="inline-block w-1 animate-pulse rounded bg-slate-900"
-                  style={{ height: `${8 + ((idx * 7) % 24)}px` }}
-                />
-              ))}
-            </div>
-          )}
-          <p className="text-xs text-slate-600">{isRecording ? transcript || "Listening..." : status}</p>
+          <div className="mb-2 flex gap-1">
+            {waveform.map((_, idx) => (
+              <span
+                key={idx}
+                className="inline-block w-1 animate-pulse rounded bg-slate-900"
+                style={{ height: `${8 + ((idx * 7) % 24)}px` }}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-slate-600">{transcript || "Listening..."}</p>
         </div>
       )}
       <button
