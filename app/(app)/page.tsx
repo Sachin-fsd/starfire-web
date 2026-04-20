@@ -5,7 +5,7 @@ import { NoteCard } from "@/components/NoteCard";
 
 type Note = { _id: string; content: string; createdAt: string };
 
-export default function DashboardPage() {
+export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState("");
 

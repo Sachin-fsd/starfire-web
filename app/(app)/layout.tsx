@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SearchBar } from "@/components/SearchBar";
 import { VoiceMic } from "@/components/VoiceMic";
+import { auth } from "@/lib/auth";
+import { connectMongo } from "@/lib/mongodb";
+import { Profile } from "@/models/Profile";
 
 const nav = [
   ["Dashboard", "/dashboard"],
@@ -11,7 +15,24 @@ const nav = [
   ["Settings", "/settings"]
 ] as const;
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+  if (!session?.user || session.error === "RefreshAccessTokenError") {
+    redirect("/login");
+  }
+
+  // Ensure profile exists
+  await connectMongo();
+  const existingProfile = await Profile.findOne({ userId: session.user.email });
+  if (!existingProfile) {
+    await Profile.create({
+      userId: session.user.email,
+      name: session.user.name,
+      email: session.user.email,
+      avatarUrl: session.user.image
+    });
+  }
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">

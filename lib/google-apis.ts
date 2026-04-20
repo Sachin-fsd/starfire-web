@@ -25,3 +25,7 @@ export async function getCalendarClient() {
 export async function getTasksClient() {
   return google.tasks({ version: "v1", auth: await oauthClient() });
 }
+
+export async function getContactsClient() {
+  return google.people({ version: "v1", auth: await oauthClient() });
+}

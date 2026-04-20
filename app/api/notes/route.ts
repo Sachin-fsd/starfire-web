@@ -3,11 +3,17 @@ import { auth } from "@/lib/auth";
 import { connectMongo } from "@/lib/mongodb";
 import { Note } from "@/models/Note";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await connectMongo();
-  const notes = await Note.find({ userId: session.user.email }).sort({ createdAt: -1 }).lean();
+  const { searchParams } = new URL(req.url);
+  const threadId = searchParams.get("threadId");
+
+  const query: Record<string, string> = { userId: session.user.email };
+  if (threadId) query.threadId = threadId;
+
+  const notes = await Note.find(query).sort({ createdAt: -1 }).lean();
   return NextResponse.json(notes);
 }
 

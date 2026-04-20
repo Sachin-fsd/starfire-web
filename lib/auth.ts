@@ -1,5 +1,31 @@
+import crypto from "node:crypto";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+
+function clean(value?: string | null) {
+  if (!value) return "";
+  return value.trim().replace(/^"|"$/g, "").replace(/^'|'$/g, "");
+}
+
+function firstEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = clean(process.env[key]);
+    if (value) return value;
+  }
+  return "";
+}
+
+function resolveAuthSecret() {
+  const configured = firstEnv("AUTH_SECRET", "NEXTAUTH_SECRET");
+  if (configured) return configured;
+
+  // Prevent `MissingSecret` crashes in local/preview environments.
+  // Replace with a strong secret in real deployments.
+  return crypto.createHash("sha256").update("flowmind-fallback-secret-change-me").digest("hex");
+}
+
+const googleClientId = firstEnv("GOOGLE_CLIENT_ID", "AUTH_GOOGLE_ID");
+const googleClientSecret = firstEnv("GOOGLE_CLIENT_SECRET", "AUTH_GOOGLE_SECRET");
 
 async function refreshAccessToken(token: any) {
   try {
@@ -8,8 +34,8 @@ async function refreshAccessToken(token: any) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        client_id: googleClientId,
+        client_secret: googleClientSecret,
         grant_type: "refresh_token",
         refresh_token: token.refresh_token
       })
@@ -30,8 +56,11 @@ async function refreshAccessToken(token: any) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: resolveAuthSecret(),
   providers: [
     Google({
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
       authorization: {
         params: {
           scope:
@@ -62,5 +91,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     }
   },
-  session: { strategy: "jwt" }
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60, }
 });
