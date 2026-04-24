@@ -4,7 +4,7 @@ export const IntentSchema = z.object({
   thread: z.string().nullable().optional(),
   threadId: z.string().nullable().optional(),
   action: z.enum(["EMAIL", "NOTE", "CALENDAR", "TASK", "REMINDER", "SEARCH", "CHAT"]),
-  recipients: z.array(z.object({ name: z.string(), email: z.string().nullable() })).optional(),
+  recipients: z.array(z.object({ name: z.string(), email: z.string().nullable() })).optional().nullable(),
   subject: z.string().nullable().optional(),
   body: z.string().nullable().optional(),
   datetime: z.string().nullable().optional(),
