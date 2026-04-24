@@ -8,7 +8,6 @@ type Message = { role: "user" | "assistant" | "status"; content: string };
 
 export default function DashboardPage() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [supported, setSupported] = useState(true);
   const [transcript, setTranscript] = useState("");
@@ -153,10 +152,10 @@ export default function DashboardPage() {
   }
 
   async function handleTextSubmit() {
-    const nextInput = input.trim();
+    const nextInput = textInput.trim();
     if (!nextInput) return;
     setMessages(prev => [...prev, { role: "user", content: nextInput }]);
-    setInput("");
+    setTextInput("");
     transcriptRef.current = nextInput;
     await runPipeline(nextInput);
   }
